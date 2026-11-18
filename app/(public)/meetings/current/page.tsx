@@ -2,17 +2,14 @@ import { Suspense, type ReactElement } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
-import { fetchMeetingsApi } from '@/lib/api';
+import { getMeetings } from '@/lib/meetings-db';
 import { mostRecentSunday } from '@/lib/dates';
-import type { SacramentMeeting } from '@/lib/types';
 import Loading from '../loading';
 
 async function CurrentProgram(): Promise<ReactElement> {
   await connection();
   const sunday = mostRecentSunday();
-  const response = await fetchMeetingsApi();
-  if (!response.ok) throw new Error('The current program could not be loaded.');
-  const meetings: SacramentMeeting[] = await response.json();
+  const meetings = await getMeetings();
   const current = meetings.find((meeting) => meeting.date === sunday);
   if (current) redirect(`/meetings/${current.id}`);
   const previous = meetings.filter((meeting) => meeting.date < sunday).sort((a, b) => b.date.localeCompare(a.date))[0];
