@@ -22,7 +22,7 @@ export default function MeetingSearch({ query }: { query: string }) {
 
   return <div role="search" className="mt-8 max-w-xl">
     <label htmlFor="meeting-search" className="block text-sm font-medium text-navy">Search meetings</label>
-    <input id="meeting-search" type="search" value={input.value} onChange={(event) => { setInput({ query, value: event.target.value }); search(event.target.value); }} aria-describedby="meeting-search-help" className="mt-2 w-full border border-line bg-paper px-4 py-3 text-ink" />
+    <input id="meeting-search" type="search" value={input.value} onChange={(event) => { setInput({ query, value: event.target.value }); search(event.target.value); }} aria-label="Search meetings" aria-describedby="meeting-search-help" className="mt-2 w-full border border-line bg-paper px-4 py-3 text-ink" />
     <p id="meeting-search-help" className="mt-2 text-sm text-muted">Search by speaker, presiding or conducting leader, or meeting type.</p>
   </div>;
 }

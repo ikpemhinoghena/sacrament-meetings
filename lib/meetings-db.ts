@@ -65,7 +65,7 @@ export function normalizePage(value?: string): number {
 
 export async function getMeetingSearchResults(query: string, requestedPage: number) {
   const sql = database();
-  const pattern = `%${query.replace(/[\\%_]/g, '\\$&')}%`;
+  const pattern = `%${query.trim().replace(/[\\%_]/g, '\\$&')}%`;
   const counts = await sql.query(`SELECT count(*)::int AS total FROM meetings WHERE ${searchFilter}`, [pattern]);
   const total = counts[0].total as number;
   const totalPages = Math.max(1, Math.ceil(total / MEETINGS_PER_PAGE));
