@@ -13,6 +13,7 @@
   --color-bronze: #886b3f;
   --color-line: #d9d3c6;
   --color-paper: #fffdf8;
+  --color-danger: #9b2c2c;
   --font-sans: var(--font-geist-sans);
   --font-serif: Georgia, 'Times New Roman', serif;
 }

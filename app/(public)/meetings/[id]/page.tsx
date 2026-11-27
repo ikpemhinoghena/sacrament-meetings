@@ -18,5 +18,5 @@ async function Program({ params, searchParams }: PageProps<'/meetings/[id]'>): P
 }
 
 export default function MeetingPage(props: PageProps<'/meetings/[id]'>): ReactElement {
-  return <Suspense fallback={<Loading />}><Program {...props} /></Suspense>;
+  return <Suspense fallback={<div className="min-h-screen"><Loading /></div>}><Program {...props} /></Suspense>;
 }

@@ -77,18 +77,63 @@ export async function getMeetingSearchResults(query: string, requestedPage: numb
   return { meetings: (rows as MeetingRow[]).map(mapMeeting), total, totalPages, page };
 }
 
-export async function createMeeting(meeting: Omit<SacramentMeeting, 'id'>): Promise<never> {
-  void meeting;
-  throw new Error('Creating meetings is coming in Week 04.');
+export type MeetingInput = Omit<SacramentMeeting, 'id'>;
+
+export class MeetingDateTakenError extends Error {
+  constructor() {
+    super('A meeting is already scheduled for this date.');
+    this.name = 'MeetingDateTakenError';
+  }
 }
 
-export async function updateMeeting(id: number, meeting: Partial<Omit<SacramentMeeting, 'id'>>): Promise<never> {
-  void id;
-  void meeting;
-  throw new Error('Updating meetings is coming in Week 04.');
+function meetingValues(meeting: MeetingInput): unknown[] {
+  return [
+    meeting.date, meeting.meetingType, meeting.presiding, meeting.conducting,
+    JSON.stringify(meeting.announcements ?? []), JSON.stringify(meeting.openingHymn), meeting.openingPrayer,
+    JSON.stringify(meeting.wardBusiness), meeting.stakeBusiness, JSON.stringify(meeting.sacramentHymn),
+    JSON.stringify(meeting.speakers), JSON.stringify(meeting.closingHymn), meeting.closingPrayer,
+  ];
 }
 
-export async function deleteMeeting(id: number): Promise<never> {
-  void id;
-  throw new Error('Deleting meetings is coming in Week 04.');
+function rethrowDateConflict(error: unknown): never {
+  if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') throw new MeetingDateTakenError();
+  throw error;
+}
+
+export async function createMeeting(meeting: MeetingInput): Promise<number> {
+  try {
+    const rows = await database().query(
+      `INSERT INTO meetings (date, meeting_type, presiding, conducting, announcements, opening_hymn, opening_prayer,
+        ward_business, stake_business, sacrament_hymn, speakers, closing_hymn, closing_prayer)
+      VALUES ($1::date, $2, $3, $4, ARRAY(SELECT jsonb_array_elements_text($5::jsonb)), $6::jsonb, $7,
+        $8::jsonb, $9::boolean, $10::jsonb, $11::jsonb, $12::jsonb, $13)
+      RETURNING id`,
+      meetingValues(meeting),
+    );
+    return rows[0].id as number;
+  } catch (error) {
+    rethrowDateConflict(error);
+  }
+}
+
+export async function updateMeeting(id: number, meeting: MeetingInput): Promise<boolean> {
+  try {
+    const rows = await database().query(
+      `UPDATE meetings SET date = $1::date, meeting_type = $2, presiding = $3, conducting = $4,
+        announcements = ARRAY(SELECT jsonb_array_elements_text($5::jsonb)), opening_hymn = $6::jsonb, opening_prayer = $7,
+        ward_business = $8::jsonb, stake_business = $9::boolean, sacrament_hymn = $10::jsonb, speakers = $11::jsonb,
+        closing_hymn = $12::jsonb, closing_prayer = $13
+      WHERE id = $14::bigint
+      RETURNING id`,
+      [...meetingValues(meeting), id],
+    );
+    return rows.length > 0;
+  } catch (error) {
+    rethrowDateConflict(error);
+  }
+}
+
+export async function deleteMeeting(id: number): Promise<boolean> {
+  const rows = await database().query('DELETE FROM meetings WHERE id = $1::bigint RETURNING id', [id]);
+  return rows.length > 0;
 }
